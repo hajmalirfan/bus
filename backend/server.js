@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
 const User = require('./models/User');
@@ -25,22 +24,19 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Cookie parser
-app.use(cookieParser());
-
 // Security headers
 app.use(helmet());
 
 // Enable CORS
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 100,
     message: 'Too many requests from this IP, please try again later'
 });
 
@@ -169,11 +165,6 @@ app.get('/', (req, res) => {
     res.json({
         message: 'Welcome to Bus Booking API',
         version: '1.0.0',
-        endpoints: {
-            auth: '/api/auth',
-            buses: '/api/buses',
-            bookings: '/api/bookings'
-        },
         testUser: {
             email: 'test@bus.com',
             password: 'test123'
@@ -195,6 +186,5 @@ const server = app.listen(PORT, async () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`);
-    // Close server & exit process
     server.close(() => process.exit(1));
 });
