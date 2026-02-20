@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -9,21 +8,6 @@ import SearchBus from './pages/SearchBus';
 import Booking from './pages/Booking';
 import Payment from './pages/Payment';
 import Profile from './pages/Profile';
-
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
-
-    if (loading) {
-        return (
-            <div className="loading-container" style={{ minHeight: '60vh' }}>
-                <div className="loader"></div>
-            </div>
-        );
-    }
-
-    return isAuthenticated ? children : <Navigate to="/login" />;
-};
 
 // Main Layout Component
 const Layout = ({ children }) => {
@@ -38,7 +22,7 @@ const Layout = ({ children }) => {
     );
 };
 
-// App Routes
+// App Routes - No login required
 const AppRoutes = () => {
     return (
         <Routes>
@@ -46,32 +30,10 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/search" element={<SearchBus />} />
-            <Route
-                path="/booking/:id"
-                element={
-                    <ProtectedRoute>
-                        <Booking />
-                    </ProtectedRoute>
-                }
-            />
+            <Route path="/booking/:id" element={<Booking />} />
             <Route path="/payment" element={<Payment />} />
-            <Route
-                path="/bookings"
-                element={
-                    <ProtectedRoute>
-                        <Profile />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/profile"
-                element={
-                    <ProtectedRoute>
-                        <Profile />
-                    </ProtectedRoute>
-                }
-            />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/bookings" element={<Profile />} />
+            <Route path="/profile" element={<Profile />} />
         </Routes>
     );
 };
@@ -79,11 +41,9 @@ const AppRoutes = () => {
 function App() {
     return (
         <Router>
-            <AuthProvider>
-                <Layout>
-                    <AppRoutes />
-                </Layout>
-            </AuthProvider>
+            <Layout>
+                <AppRoutes />
+            </Layout>
         </Router>
     );
 }

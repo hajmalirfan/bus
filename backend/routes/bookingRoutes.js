@@ -9,10 +9,10 @@ const {
 } = require('../controllers/bookingController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-router.get('/mybookings', protect, getMyBookings);
+router.get('/mybookings', getMyBookings);
 router.get('/admin/all', protect, admin, getAllBookings);
-router.get('/:id', protect, getBooking);
-router.post('/', protect, createBooking);
-router.put('/:id/cancel', protect, cancelBooking);
+router.get('/:id', getBooking);
+router.post('/', createBooking);
+router.put('/:id/cancel', cancelBooking);
 
 module.exports = router;

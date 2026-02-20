@@ -5,9 +5,9 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 // @desc    Create new booking
 // @route   POST /api/bookings
-// @access  Private
+// @access  Public
 const createBooking = asyncHandler(async (req, res, next) => {
-    const { busId, passengers, seatNumbers, pickupPoint, dropPoint, travelDate, paymentMethod } = req.body;
+    const { busId, passengers, seatNumbers, pickupPoint, dropPoint, travelDate, paymentMethod, userId } = req.body;
 
     // Find the bus
     const bus = await Bus.findById(busId);
@@ -41,9 +41,12 @@ const createBooking = asyncHandler(async (req, res, next) => {
     // Calculate total price
     const totalPrice = bus.price * seatNumbers.length;
 
+    // Use provided userId or null for guest booking
+    const userIdToUse = userId || null;
+
     // Create booking
     const booking = await Booking.create({
-        user: req.user.id,
+        user: userIdToUse,
         bus: busId,
         passengers,
         totalSeats: seatNumbers.length,
@@ -71,7 +74,7 @@ const createBooking = asyncHandler(async (req, res, next) => {
     // Create payment record
     const payment = await Payment.create({
         booking: booking._id,
-        user: req.user.id,
+        user: userIdToUse,
         amount: totalPrice,
         paymentMethod: paymentMethod || 'Card',
         paymentStatus: 'Completed',
@@ -91,9 +94,16 @@ const createBooking = asyncHandler(async (req, res, next) => {
 
 // @desc    Get all bookings for current user
 // @route   GET /api/bookings
-// @access  Private
+// @access  Public
 const getMyBookings = asyncHandler(async (req, res, next) => {
-    const bookings = await Booking.find({ user: req.user.id })
+    const { userId } = req.query;
+
+    let query = {};
+    if (userId) {
+        query.user = userId;
+    }
+
+    const bookings = await Booking.find(query)
         .populate('bus')
         .sort('-createdAt');
 
@@ -106,7 +116,7 @@ const getMyBookings = asyncHandler(async (req, res, next) => {
 
 // @desc    Get single booking
 // @route   GET /api/bookings/:id
-// @access  Private
+// @access  Public
 const getBooking = asyncHandler(async (req, res, next) => {
     const booking = await Booking.findById(req.params.id)
         .populate('bus')
@@ -119,14 +129,6 @@ const getBooking = asyncHandler(async (req, res, next) => {
         });
     }
 
-    // Check if user owns the booking or is admin
-    if (booking.user._id.toString() !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            message: 'Not authorized to view this booking'
-        });
-    }
-
     res.status(200).json({
         success: true,
         booking
@@ -135,7 +137,7 @@ const getBooking = asyncHandler(async (req, res, next) => {
 
 // @desc    Cancel booking
 // @route   PUT /api/bookings/:id/cancel
-// @access  Private
+// @access  Public
 const cancelBooking = asyncHandler(async (req, res, next) => {
     const booking = await Booking.findById(req.params.id);
 
@@ -143,14 +145,6 @@ const cancelBooking = asyncHandler(async (req, res, next) => {
         return res.status(404).json({
             success: false,
             message: 'Booking not found'
-        });
-    }
-
-    // Check if user owns the booking
-    if (booking.user.toString() !== req.user.id) {
-        return res.status(403).json({
-            success: false,
-            message: 'Not authorized to cancel this booking'
         });
     }
 

@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useParams, Link } from 'react-router-dom';
 import { busAPI, bookingAPI } from '../services/api';
 import SeatSelector from '../components/SeatSelector';
 import Loader from '../components/Loader';
 
 const Booking = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
 
     const [bus, setBus] = useState(null);
     const [bookedSeats, setBookedSeats] = useState([]);
@@ -25,12 +22,8 @@ const Booking = () => {
     });
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            navigate('/login', { state: { from: `/booking/${id}` } });
-            return;
-        }
         fetchBusDetails();
-    }, [id, isAuthenticated]);
+    }, [id]);
 
     useEffect(() => {
         // Initialize passenger forms when seats are selected
